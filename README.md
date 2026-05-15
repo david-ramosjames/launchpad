@@ -1,36 +1,94 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Launch Pad — Ramos James Law
 
-## Getting Started
+Internal employee portal: a visual command center for tools, workflows, training, and internal links.
 
-First, run the development server:
+## Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Next.js (App Router) + TypeScript
+- Tailwind CSS + shadcn-style UI components
+- Firebase Auth (Google) + Firestore
+- Vercel-ready
+
+## Setup
+
+1. **Clone and install**
+
+   ```bash
+   npm install
+   ```
+
+2. **Firebase project**
+
+   - Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
+   - Enable **Google** sign-in under Authentication
+   - Create a **Firestore** database
+   - Deploy rules and indexes:
+
+     ```bash
+     firebase deploy --only firestore:rules,firestore:indexes
+     ```
+
+3. **Environment**
+
+   Copy `.env.example` to `.env.local` and fill in values:
+
+   ```bash
+   cp .env.example .env.local
+   ```
+
+   | Variable | Description |
+   |----------|-------------|
+   | `NEXT_PUBLIC_FIREBASE_*` | Firebase web app config |
+   | `NEXT_PUBLIC_APPROVED_DOMAINS` | Comma-separated email domains |
+   | `NEXT_PUBLIC_SUPER_ADMIN_EMAILS` | Emails that get `super_admin` on first login |
+   | `SEED_SECRET` | Secret for the seed API route |
+
+4. **Seed starter data**
+
+   After the app is running and env is set:
+
+   ```bash
+   curl -X POST http://localhost:3000/api/seed -H "x-seed-secret: YOUR_SEED_SECRET"
+   ```
+
+5. **Run locally**
+
+   ```bash
+   npm run dev
+   ```
+
+   Open [http://localhost:3000](http://localhost:3000) and sign in with an approved Google account.
+
+## Roles
+
+| Role | Access |
+|------|--------|
+| `viewer` | See cards allowed by visibility |
+| `editor` | Same + more card visibility |
+| `admin` | Admin panel: cards, categories, announcements |
+| `super_admin` | Admin + change any user's role |
+
+## Project structure
+
+```
+src/
+  app/              # Pages (dashboard, login, admin, seed API)
+  components/       # UI, dashboard, admin, auth
+  contexts/         # AuthProvider
+  hooks/            # useLaunchData
+  lib/              # Firebase, Firestore helpers, seed data, filters
+  types/            # Shared TypeScript types
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Deploy (Vercel)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Push to GitHub and import in Vercel
+2. Add all `NEXT_PUBLIC_*` and `SEED_SECRET` env vars
+3. Deploy Firestore rules/indexes to production Firebase
+4. Call the seed endpoint once after first deploy
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Security notes
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Only approved domains/emails can sign in
+- Admin routes are protected client-side and should be backed by Firestore rules
+- This app is a link/workflow hub — no case data is stored here

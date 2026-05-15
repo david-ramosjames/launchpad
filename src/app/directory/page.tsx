@@ -1,12 +1,12 @@
 "use client";
 
 import { ProtectedRoute } from "@/components/auth/protected-route";
-import { DashboardView } from "@/components/dashboard/dashboard-view";
+import { DirectoryPage } from "@/components/directory/directory-page";
 
-export default function HomePage() {
+export default function DirectoryRoute() {
   return (
     <ProtectedRoute>
-      <DashboardView />
+      <DirectoryPage />
     </ProtectedRoute>
   );
 }
