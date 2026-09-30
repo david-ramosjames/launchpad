@@ -9,6 +9,7 @@ import { SearchBar } from "./search-bar";
 import { AnnouncementBanner } from "./announcement-banner";
 import { CategorySection } from "./category-section";
 import { CardGrid } from "./card-grid";
+import { TodayPanel } from "./today-panel";
 import { filterCards, groupCardsByCategory } from "@/lib/filter-cards";
 import {
   toggleFavorite,
@@ -56,7 +57,8 @@ export function DashboardView() {
     () =>
       recentIds
         .map((id) => cards.find((c) => c.id === id))
-        .filter((c): c is LaunchCardType => c != null),
+        .filter((c): c is LaunchCardType => c != null)
+        .slice(0, 4),
     [cards, recentIds]
   );
 
@@ -130,10 +132,10 @@ export function DashboardView() {
         </div>
 
         {!search && favoriteCards.length > 0 && (
-          <section className="mb-10">
-            <div className="mb-4 flex items-center gap-2">
-              <Star className="h-5 w-5 text-pink-500 fill-pink-500" />
-              <h2 className="text-lg font-semibold text-navy-900">Favorites</h2>
+          <section className="mb-8">
+            <div className="mb-3 flex items-center gap-2">
+              <Star className="h-4 w-4 text-pink-500 fill-pink-500" />
+              <h2 className="text-base font-semibold text-navy-900">Favorites</h2>
             </div>
             <CardGrid
               cards={favoriteCards}
@@ -146,10 +148,10 @@ export function DashboardView() {
         )}
 
         {!search && recentCards.length > 0 && (
-          <section className="mb-10">
-            <div className="mb-4 flex items-center gap-2">
-              <Clock className="h-5 w-5 text-navy-500" />
-              <h2 className="text-lg font-semibold text-navy-900">Recently Used</h2>
+          <section className="mb-8">
+            <div className="mb-3 flex items-center gap-2">
+              <Clock className="h-4 w-4 text-navy-500" />
+              <h2 className="text-base font-semibold text-navy-900">Recently Used</h2>
             </div>
             <CardGrid
               cards={recentCards}
@@ -160,6 +162,8 @@ export function DashboardView() {
             />
           </section>
         )}
+
+        {!search && <TodayPanel />}
 
         {grouped.map((group) => (
           <CategorySection

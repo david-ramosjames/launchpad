@@ -26,6 +26,23 @@ export function CardGrid({
     );
   }
 
+  if (compact) {
+    return (
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {cards.map((card) => (
+          <LaunchCard
+            key={card.id}
+            card={card}
+            isFavorite={favoriteIds.includes(card.id)}
+            onToggleFavorite={onToggleFavorite}
+            onOpen={onOpen}
+            compact
+          />
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="columns-1 gap-4 sm:columns-2 lg:columns-3 xl:columns-4 [&>article]:mb-4 [&>article]:break-inside-avoid">
       {cards.map((card) => (
