@@ -1,12 +1,51 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { CalendarDays, Gauge, Video, AlertCircle, Flag } from "lucide-react";
+import {
+  CalendarDays,
+  Gauge,
+  Video,
+  AlertCircle,
+  Flag,
+  ExternalLink,
+} from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 import type { TodayMeeting, TodayResponse } from "@/types/today";
 
 const FIRM_TIME_ZONE = "America/Chicago";
+const DOCKET_FLOW_URL =
+  process.env.NEXT_PUBLIC_DOCKET_FLOW_URL || "https://rjl-docket-flow.vercel.app";
+const CASE_TRACKER_URL =
+  process.env.NEXT_PUBLIC_CASE_TRACKER_URL || "https://rjl-case-tracker.vercel.app";
+
+function PanelHeadingLink({
+  href,
+  icon: Icon,
+  children,
+}: {
+  href: string;
+  icon: typeof CalendarDays;
+  children: React.ReactNode;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group/heading flex items-center gap-2 rounded-md hover:text-navy-700"
+    >
+      <Icon className="h-4 w-4 text-navy-500" />
+      <h2 className="text-base font-semibold text-navy-900 group-hover/heading:underline group-hover/heading:decoration-pink-300 group-hover/heading:underline-offset-4">
+        {children}
+      </h2>
+      <ExternalLink
+        className="h-3.5 w-3.5 text-stone-400 group-hover/heading:text-navy-600"
+        aria-label="(opens in a new tab)"
+      />
+    </a>
+  );
+}
 
 const timeFormat = new Intl.DateTimeFormat("en-US", {
   hour: "numeric",
@@ -81,8 +120,9 @@ export function TodayPanel() {
       <div className="rounded-xl border border-stone-200/80 bg-white p-4 shadow-sm lg:col-span-3">
         <div className="mb-3 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <CalendarDays className="h-4 w-4 text-navy-500" />
-            <h2 className="text-base font-semibold text-navy-900">Your Day</h2>
+            <PanelHeadingLink href={DOCKET_FLOW_URL} icon={CalendarDays}>
+              Your Day
+            </PanelHeadingLink>
             {data && (
               <span className="text-xs text-stone-500">{formatDateHeading(data.date)}</span>
             )}
@@ -198,10 +238,9 @@ export function TodayPanel() {
 
       <div className="rounded-xl border border-stone-200/80 bg-white p-4 shadow-sm lg:col-span-2">
         <div className="mb-3">
-          <div className="flex items-center gap-2">
-            <Gauge className="h-4 w-4 text-navy-500" />
-            <h2 className="text-base font-semibold text-navy-900">Case Tracker</h2>
-          </div>
+          <PanelHeadingLink href={CASE_TRACKER_URL} icon={Gauge}>
+            Case Tracker
+          </PanelHeadingLink>
           <p className="mt-0.5 text-xs text-stone-500">Team case completeness</p>
         </div>
 
