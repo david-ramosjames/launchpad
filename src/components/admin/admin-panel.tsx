@@ -54,6 +54,8 @@ import {
   ArrowUp,
   ArrowDown,
   Archive,
+  Check,
+  X,
 } from "lucide-react";
 
 const CARD_TYPES: CardType[] = [
@@ -92,6 +94,8 @@ export function AdminPanel() {
   const [announceTitle, setAnnounceTitle] = useState("");
   const [announceMessage, setAnnounceMessage] = useState("");
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [editingCategoryName, setEditingCategoryName] = useState("");
 
   const load = async () => {
     setLoading(true);
@@ -282,6 +286,27 @@ export function AdminPanel() {
     await load();
   };
 
+  const startEditCategory = (cat: Category) => {
+    setEditingCategoryId(cat.id);
+    setEditingCategoryName(cat.name);
+  };
+
+  const cancelEditCategory = () => {
+    setEditingCategoryId(null);
+    setEditingCategoryName("");
+  };
+
+  const saveCategoryName = async (cat: Category) => {
+    const name = editingCategoryName.trim();
+    if (!name || name === cat.name) {
+      cancelEditCategory();
+      return;
+    }
+    await updateCategory(cat.id, { name });
+    cancelEditCategory();
+    await load();
+  };
+
   const handleDeleteCategory = async (cat: Category) => {
     const n = cards.filter((c) => c.categoryId === cat.id).length;
     if (n > 0) {
@@ -350,8 +375,9 @@ export function AdminPanel() {
           <h2 className="mb-2 text-lg font-semibold text-navy-900">Categories</h2>
           <p className="mb-4 text-sm text-stone-600">
             Every card needs a category (e.g. &quot;Case Management&quot;, &quot;Daily Work&quot;).
-            Add one here first — then the category dropdown when adding a card will populate. Use ↑ ↓ to
-            change the order sections appear on Launch Pad.
+            Add one here first — then the category dropdown when adding a card will populate. Use the
+            pencil to rename a category (its cards stay attached), and ↑ ↓ to change the order sections
+            appear on Launch Pad.
           </p>
           <ul className="mb-3 divide-y divide-stone-100 rounded-lg border border-stone-200 text-sm">
             {categories.length === 0 ? (
@@ -362,9 +388,54 @@ export function AdminPanel() {
                   key={cat.id}
                   className="flex items-center gap-1 py-1 pl-3 pr-0.5"
                 >
-                  <span className="min-w-0 flex-1 truncate font-medium text-navy-800">
-                    {cat.name}
-                  </span>
+                  {editingCategoryId === cat.id ? (
+                    <>
+                      <Input
+                        autoFocus
+                        aria-label="Category name"
+                        className="h-7 min-w-0 flex-1 text-sm"
+                        value={editingCategoryName}
+                        onChange={(e) => setEditingCategoryName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") saveCategoryName(cat);
+                          if (e.key === "Escape") cancelEditCategory();
+                        }}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 shrink-0 text-emerald-600 hover:bg-emerald-50"
+                        title="Save name"
+                        onClick={() => saveCategoryName(cat)}
+                      >
+                        <Check className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 shrink-0"
+                        title="Cancel"
+                        onClick={cancelEditCategory}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="min-w-0 flex-1 truncate font-medium text-navy-800">
+                        {cat.name}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 shrink-0"
+                        title="Rename category"
+                        onClick={() => startEditCategory(cat)}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                    </>
+                  )}
                   <span className="shrink-0 tabular-nums text-xs text-stone-400">{idx + 1}</span>
                   <div className="flex shrink-0 gap-0.5">
                     <Button
