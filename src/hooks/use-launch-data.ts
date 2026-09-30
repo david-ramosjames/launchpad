@@ -1,16 +1,15 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import {
   getCards,
   getCategories,
   getAnnouncements,
 } from "@/lib/firestore/helpers";
-import type { LaunchCard, Category, Announcement } from "@/types";
-import { canAccessCard } from "@/types";
-import type { UserRole } from "@/types";
+import type { LaunchCard, Category, Announcement, AppUser } from "@/types";
+import { canAccessCard, canSeeCategory } from "@/types";
 
-export function useLaunchData(userRole: UserRole | undefined) {
+export function useLaunchData(user: Pick<AppUser, "id" | "role"> | null | undefined) {
   const [cards, setCards] = useState<LaunchCard[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -40,10 +39,30 @@ export function useLaunchData(userRole: UserRole | undefined) {
     load();
   }, [load]);
 
-  const visibleCards =
-    userRole != null
-      ? cards.filter((c) => canAccessCard(userRole, c.visibilityRoles))
-      : [];
+  const userId = user?.id;
+  const userRole = user?.role;
+
+  const visibleCategories = useMemo(
+    () =>
+      userId && userRole
+        ? categories.filter((c) => canSeeCategory(c, userId, userRole))
+        : [],
+    [categories, userId, userRole]
+  );
+
+  const visibleCards = useMemo(() => {
+    if (!userId || !userRole) return [];
+    const hiddenCategoryIds = new Set(
+      categories
+        .filter((c) => !canSeeCategory(c, userId, userRole))
+        .map((c) => c.id)
+    );
+    return cards.filter(
+      (c) =>
+        !hiddenCategoryIds.has(c.categoryId) &&
+        canAccessCard(userRole, c.visibilityRoles)
+    );
+  }, [cards, categories, userId, userRole]);
 
   const visibleAnnouncements =
     userRole != null
@@ -57,7 +76,7 @@ export function useLaunchData(userRole: UserRole | undefined) {
   return {
     cards: visibleCards,
     allCards: cards,
-    categories,
+    categories: visibleCategories,
     announcements: visibleAnnouncements,
     loading,
     error,

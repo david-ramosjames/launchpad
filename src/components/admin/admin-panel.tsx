@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { Header } from "@/components/layout/header";
 import { CaseTrackerVisibility } from "./case-tracker-visibility";
+import { CategoryAccessButton } from "./category-access-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -203,6 +204,7 @@ export function AdminPanel() {
       slug,
       order: categories.length + 1,
       isActive: true,
+      allowedUserIds: [],
     });
     setNewCategoryName("");
     await load();
@@ -436,6 +438,14 @@ export function AdminPanel() {
                       </Button>
                     </>
                   )}
+                  <CategoryAccessButton
+                    category={cat}
+                    users={users}
+                    onSave={async (allowedUserIds) => {
+                      await updateCategory(cat.id, { allowedUserIds });
+                      await load();
+                    }}
+                  />
                   <span className="shrink-0 tabular-nums text-xs text-stone-400">{idx + 1}</span>
                   <div className="flex shrink-0 gap-0.5">
                     <Button

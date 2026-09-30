@@ -24,9 +24,8 @@ import { Star, Clock, Settings, Sparkles } from "lucide-react";
 
 export function DashboardView() {
   const { appUser, setAppUser } = useAuth();
-  const { cards, categories, announcements, loading, error } = useLaunchData(
-    appUser?.role
-  );
+  const { cards, categories, announcements, loading, error } =
+    useLaunchData(appUser);
   const [search, setSearch] = useState("");
 
   const isAdmin = appUser ? isAdminRole(appUser.role) : false;

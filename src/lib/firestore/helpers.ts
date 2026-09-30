@@ -250,6 +250,24 @@ export async function archiveCard(id: string): Promise<void> {
 
 // --- Categories ---
 
+function mapCategoryDoc(d: { id: string; data: () => Record<string, unknown> }): Category {
+  const data = d.data();
+  const allowed = data.allowedUserIds;
+  return {
+    id: d.id,
+    name: data.name as string,
+    slug: data.slug as string,
+    description: data.description as string | undefined,
+    order: data.order as number,
+    isActive: data.isActive as boolean,
+    allowedUserIds: Array.isArray(allowed)
+      ? allowed.filter((id): id is string => typeof id === "string")
+      : [],
+    createdAt: toDate(data.createdAt as Timestamp | undefined),
+    updatedAt: toDate(data.updatedAt as Timestamp | undefined),
+  };
+}
+
 export async function getCategories(): Promise<Category[]> {
   const q = query(
     collection(db(), COLLECTIONS.categories),
@@ -257,19 +275,7 @@ export async function getCategories(): Promise<Category[]> {
     orderBy("order", "asc")
   );
   const snap = await getDocs(q);
-  return snap.docs.map((d) => {
-    const data = d.data();
-    return {
-      id: d.id,
-      name: data.name,
-      slug: data.slug,
-      description: data.description,
-      order: data.order,
-      isActive: data.isActive,
-      createdAt: toDate(data.createdAt),
-      updatedAt: toDate(data.updatedAt),
-    };
-  });
+  return snap.docs.map(mapCategoryDoc);
 }
 
 export async function getAllCategories(): Promise<Category[]> {
@@ -278,19 +284,7 @@ export async function getAllCategories(): Promise<Category[]> {
     orderBy("order", "asc")
   );
   const snap = await getDocs(q);
-  return snap.docs.map((d) => {
-    const data = d.data();
-    return {
-      id: d.id,
-      name: data.name,
-      slug: data.slug,
-      description: data.description,
-      order: data.order,
-      isActive: data.isActive,
-      createdAt: toDate(data.createdAt),
-      updatedAt: toDate(data.updatedAt),
-    };
-  });
+  return snap.docs.map(mapCategoryDoc);
 }
 
 export async function createCategory(

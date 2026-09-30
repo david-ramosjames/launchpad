@@ -191,6 +191,19 @@ interface ResultRow {
 
 const filled = (value: string | null | undefined) => Boolean(value?.trim());
 
+/** Stored stage values vary ("Settlement", "DISENGAGED", …); mirrors the tracker's normalizeStage. */
+function normalizeStage(value: string | null): string {
+  const v = value?.toLowerCase();
+  if (v === "lit" || v === "litigation" || v === "litigated") return "Lit";
+  if (v === "txt" || v === "treatment") return "Txt";
+  if (v === "dmd" || v === "demand") return "Dmd";
+  if (v === "settled" || v === "settlement" || v === "set") return "Settled";
+  if (v === "disengaged" || v === "disengaging") return "Disengaged";
+  if (v === "referred") return "Referred";
+  if (v === "terminated" || v === "closed") return "Terminated";
+  return "Onboarding";
+}
+
 function isFresh(validatedAt: string | null, now: number) {
   if (!validatedAt) return false;
   const time = Date.parse(validatedAt);
@@ -264,7 +277,7 @@ export async function getAttorneyScores(): Promise<AttorneyScoreSummary[]> {
   const byAttorney = new Map<string, ReturnType<typeof scoreEntry>[]>();
 
   for (const entry of entries) {
-    const stage = entry.case_stage ?? "";
+    const stage = normalizeStage(entry.case_stage);
     if (CLOSED_STAGES.has(stage)) continue;
     const result = resultByEntry.get(entry.id);
     const fullyDisbursed = result?.disbursed_status === "Yes" && filled(result.disburse_date);

@@ -12,7 +12,7 @@ export async function POST(request: Request) {
 
   try {
     const { categoryIds } = await seedDatabase(
-      SEED_CATEGORIES.map((c) => ({ ...c })),
+      SEED_CATEGORIES.map((c) => ({ ...c, allowedUserIds: [] })),
       SEED_CARDS.map((card) => ({
         ...card,
         categoryId: card.categoryId,

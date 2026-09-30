@@ -46,8 +46,20 @@ export interface Category {
   description?: string;
   order: number;
   isActive: boolean;
+  /** User IDs who can see this category. Empty means everyone. */
+  allowedUserIds: string[];
   createdAt: Date;
   updatedAt: Date;
+}
+
+export function canSeeCategory(
+  category: Pick<Category, "allowedUserIds">,
+  userId: string,
+  role: UserRole
+): boolean {
+  if (category.allowedUserIds.length === 0) return true;
+  if (isAdminRole(role)) return true;
+  return category.allowedUserIds.includes(userId);
 }
 
 export interface LaunchCard {
