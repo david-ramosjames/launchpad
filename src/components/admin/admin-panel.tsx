@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo, Fragment } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { Header } from "@/components/layout/header";
+import { CaseTrackerVisibility } from "./case-tracker-visibility";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -627,6 +628,8 @@ export function AdminPanel() {
             </table>
           </div>
         </section>
+
+        <CaseTrackerVisibility />
 
         {/* Announcements */}
         <section className="mb-10 rounded-xl border bg-white p-6 shadow-sm">

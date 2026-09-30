@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { verifyFirebaseUser } from "@/lib/server/verify-firebase-user";
+import {
+  readFirestoreDoc,
+  stringArrayField,
+  verifyFirebaseUser,
+} from "@/lib/server/verify-firebase-user";
 import { firmToday, getAttorneyScores, getTodaysSchedule } from "@/lib/server/docket-flow";
 import type { TodayResponse } from "@/types/today";
 
@@ -17,10 +21,15 @@ export async function GET(request: Request) {
   const wantsAll = new URL(request.url).searchParams.get("scope") === "all";
   const scope: TodayResponse["scope"] = wantsAll && user.isAdmin ? "all" : "mine";
 
-  const [schedule, scores] = await Promise.allSettled([
+  const [schedule, scores, settings] = await Promise.allSettled([
     getTodaysSchedule({ email: user.email, includeEveryone: scope === "all" }),
     getAttorneyScores(),
+    readFirestoreDoc(user.idToken, "settings/caseTracker"),
   ]);
+
+  const hidden = new Set(
+    settings.status === "fulfilled" ? stringArrayField(settings.value?.hiddenAttorneyIds) : []
+  );
 
   const body: TodayResponse = {
     date: schedule.status === "fulfilled" ? schedule.value.date : firmToday(),
@@ -28,7 +37,10 @@ export async function GET(request: Request) {
     canViewAll: user.isAdmin,
     meetings: schedule.status === "fulfilled" ? schedule.value.meetings : [],
     deadlines: schedule.status === "fulfilled" ? schedule.value.deadlines : [],
-    attorneys: scores.status === "fulfilled" ? scores.value : [],
+    attorneys:
+      scores.status === "fulfilled"
+        ? scores.value.filter((a) => !hidden.has(a.attorneyId))
+        : [],
     errors: {
       ...(schedule.status === "rejected" ? { schedule: errorMessage(schedule.reason) } : {}),
       ...(scores.status === "rejected" ? { scores: errorMessage(scores.reason) } : {}),

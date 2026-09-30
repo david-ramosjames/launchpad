@@ -6,6 +6,34 @@ export interface VerifiedUser {
   email: string;
   role: UserRole;
   isAdmin: boolean;
+  idToken: string;
+}
+
+type FirestoreValue = {
+  stringValue?: string;
+  arrayValue?: { values?: FirestoreValue[] };
+};
+
+/** Reads a Firestore document as the signed-in user, so security rules apply. */
+export async function readFirestoreDoc(
+  idToken: string,
+  path: string
+): Promise<Record<string, FirestoreValue> | null> {
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  if (!projectId) return null;
+  const res = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${path}`,
+    { headers: { Authorization: `Bearer ${idToken}` }, cache: "no-store" }
+  );
+  if (!res.ok) return null;
+  const doc = (await res.json()) as { fields?: Record<string, FirestoreValue> };
+  return doc.fields ?? {};
+}
+
+export function stringArrayField(value: FirestoreValue | undefined): string[] {
+  return (value?.arrayValue?.values ?? [])
+    .map((v) => v.stringValue)
+    .filter((v): v is string => Boolean(v));
 }
 
 const ROLES: UserRole[] = ["viewer", "editor", "admin", "super_admin"];
@@ -45,17 +73,9 @@ export async function verifyFirebaseUser(request: Request): Promise<VerifiedUser
   }
 
   let role: UserRole = getDefaultRoleForEmail(email);
-  const profile = await fetch(
-    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${account.localId}`,
-    { headers: { Authorization: `Bearer ${idToken}` }, cache: "no-store" }
-  );
-  if (profile.ok) {
-    const doc = (await profile.json()) as {
-      fields?: { role?: { stringValue?: string } };
-    };
-    const stored = doc.fields?.role?.stringValue as UserRole | undefined;
-    if (stored && ROLES.includes(stored) && role !== "super_admin") role = stored;
-  }
+  const profile = await readFirestoreDoc(idToken, `users/${account.localId}`);
+  const stored = profile?.role?.stringValue as UserRole | undefined;
+  if (stored && ROLES.includes(stored) && role !== "super_admin") role = stored;
 
-  return { uid: account.localId, email, role, isAdmin: isAdminRole(role) };
+  return { uid: account.localId, email, role, isAdmin: isAdminRole(role), idToken };
 }

@@ -21,8 +21,8 @@ export function CategorySection({
   if (cards.length === 0) return null;
 
   return (
-    <section className="mb-10">
-      <div className="mb-4 flex items-center gap-3">
+    <section className="mb-8 last:mb-0">
+      <div className="mb-3 flex items-center gap-3">
         <h2 className="text-lg font-semibold text-navy-900">{categoryName}</h2>
         <div className="h-px flex-1 bg-gradient-to-r from-pink-400/70 to-transparent" />
         <span className="text-xs font-medium text-stone-400">

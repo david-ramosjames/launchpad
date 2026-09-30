@@ -44,7 +44,7 @@ export function CardGrid({
   }
 
   return (
-    <div className="columns-1 gap-4 sm:columns-2 lg:columns-3 xl:columns-4 [&>article]:mb-4 [&>article]:break-inside-avoid">
+    <div className="columns-1 gap-3 sm:columns-2 lg:columns-3 xl:columns-4 [&>article]:mb-3 [&>article]:break-inside-avoid">
       {cards.map((card) => (
         <LaunchCard
           key={card.id}

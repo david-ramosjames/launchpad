@@ -41,7 +41,24 @@ export const COLLECTIONS = {
   categories: "categories",
   announcements: "announcements",
   clickEvents: "clickEvents",
+  settings: "settings",
 } as const;
+
+// --- Settings ---
+
+export async function getHiddenAttorneyIds(): Promise<string[]> {
+  const snap = await getDoc(doc(db(), COLLECTIONS.settings, "caseTracker"));
+  const ids = snap.data()?.hiddenAttorneyIds;
+  return Array.isArray(ids) ? ids.filter((id): id is string => typeof id === "string") : [];
+}
+
+export async function setHiddenAttorneyIds(ids: string[]): Promise<void> {
+  await setDoc(
+    doc(db(), COLLECTIONS.settings, "caseTracker"),
+    { hiddenAttorneyIds: ids, updatedAt: serverTimestamp() },
+    { merge: true }
+  );
+}
 
 // --- Users ---
 

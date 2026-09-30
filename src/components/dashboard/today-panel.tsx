@@ -32,10 +32,13 @@ function meetingStatus(meeting: TodayMeeting, now: number) {
   return "upcoming";
 }
 
+const WATCH_BELOW = 85;
+const ATTENTION_BELOW = 70;
+
 function scoreTone(score: number) {
-  if (score >= 85) return "bg-emerald-500";
-  if (score >= 70) return "bg-amber-400";
-  return "bg-pink-500";
+  if (score >= WATCH_BELOW) return { bar: "bg-emerald-500/70", text: "text-navy-900" };
+  if (score >= ATTENTION_BELOW) return { bar: "bg-amber-400", text: "text-amber-600" };
+  return { bar: "bg-pink-500", text: "text-pink-600" };
 }
 
 export function TodayPanel() {
@@ -74,12 +77,12 @@ export function TodayPanel() {
   }, []);
 
   return (
-    <section className="mb-8 grid gap-4 lg:grid-cols-5">
+    <section className="grid gap-4 lg:grid-cols-5">
       <div className="rounded-xl border border-stone-200/80 bg-white p-4 shadow-sm lg:col-span-3">
         <div className="mb-3 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <CalendarDays className="h-4 w-4 text-navy-500" />
-            <h2 className="text-base font-semibold text-navy-900">Today</h2>
+            <h2 className="text-base font-semibold text-navy-900">Your Day</h2>
             {data && (
               <span className="text-xs text-stone-500">{formatDateHeading(data.date)}</span>
             )}
@@ -194,9 +197,12 @@ export function TodayPanel() {
       </div>
 
       <div className="rounded-xl border border-stone-200/80 bg-white p-4 shadow-sm lg:col-span-2">
-        <div className="mb-3 flex items-center gap-2">
-          <Gauge className="h-4 w-4 text-navy-500" />
-          <h2 className="text-base font-semibold text-navy-900">Case tracker scores</h2>
+        <div className="mb-3">
+          <div className="flex items-center gap-2">
+            <Gauge className="h-4 w-4 text-navy-500" />
+            <h2 className="text-base font-semibold text-navy-900">Case Tracker</h2>
+          </div>
+          <p className="mt-0.5 text-xs text-stone-500">Team case completeness</p>
         </div>
 
         {loading && !data ? (
@@ -207,31 +213,48 @@ export function TodayPanel() {
           <p className="py-6 text-center text-sm text-stone-500">No active cases found.</p>
         ) : (
           data && (
-            <ul className="max-h-80 space-y-2.5 overflow-y-auto pr-1">
-              {data.attorneys.map((attorney) => (
-                <li
-                  key={attorney.attorneyId}
-                  title={`Updated info ${attorney.averageFreshness}% · ${attorney.casesNeedingUpdate} of ${attorney.caseCount} cases need an update`}
-                >
-                  <div className="flex items-baseline justify-between gap-2 text-sm">
-                    <span className="truncate font-medium text-navy-900">{attorney.name}</span>
-                    <span className="shrink-0 font-semibold tabular-nums text-navy-900">
-                      {attorney.averageScore}%
-                    </span>
-                  </div>
-                  <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-stone-100">
-                    <div
-                      className={cn("h-full rounded-full", scoreTone(attorney.averageScore))}
-                      style={{ width: `${attorney.averageScore}%` }}
-                    />
-                  </div>
-                  <p className="mt-0.5 text-[11px] text-stone-500">
-                    Completeness {attorney.averageCompleteness}% · {attorney.caseCount} active
-                    cases
-                  </p>
-                </li>
-              ))}
-            </ul>
+            <>
+              <ul className="max-h-80 space-y-2.5 overflow-y-auto pr-1">
+                {data.attorneys.map((attorney) => {
+                  const tone = scoreTone(attorney.averageScore);
+                  return (
+                    <li
+                      key={attorney.attorneyId}
+                      title={`Updated info ${attorney.averageFreshness}% · ${attorney.casesNeedingUpdate} of ${attorney.caseCount} cases need an update`}
+                    >
+                      <div className="flex items-baseline justify-between gap-2 text-sm">
+                        <span className="truncate font-medium text-navy-900">
+                          {attorney.name}
+                        </span>
+                        <span className={cn("shrink-0 font-semibold tabular-nums", tone.text)}>
+                          {attorney.averageScore}%
+                        </span>
+                      </div>
+                      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-stone-100">
+                        <div
+                          className={cn("h-full rounded-full", tone.bar)}
+                          style={{ width: `${attorney.averageScore}%` }}
+                        />
+                      </div>
+                      <p className="mt-0.5 text-[11px] text-stone-500">
+                        Completeness {attorney.averageCompleteness}% · {attorney.caseCount}{" "}
+                        active cases
+                      </p>
+                    </li>
+                  );
+                })}
+              </ul>
+              <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-stone-100 pt-2 text-[11px] text-stone-500">
+                <span className="flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-amber-400" />
+                  Watch: below {WATCH_BELOW}%
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-pink-500" />
+                  Needs attention: below {ATTENTION_BELOW}%
+                </span>
+              </p>
+            </>
           )
         )}
       </div>
