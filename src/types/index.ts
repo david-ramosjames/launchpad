@@ -76,6 +76,8 @@ export interface LaunchCard {
   url: string;
   tags: string[];
   visibilityRoles: UserRole[];
+  /** User IDs who can see this card. Empty means the role list applies instead. */
+  allowedUserIds: string[];
   isActive: boolean;
   isNew: boolean;
   isImportant: boolean;
@@ -144,6 +146,17 @@ export function canAccessCard(
   return visibilityRoles.some(
     (role) => ROLE_HIERARCHY[userRole] >= ROLE_HIERARCHY[role]
   );
+}
+
+export function canSeeCard(
+  card: Pick<LaunchCard, "visibilityRoles" | "allowedUserIds">,
+  userId: string,
+  userRole: UserRole
+): boolean {
+  if (card.allowedUserIds.length > 0) {
+    return card.allowedUserIds.includes(userId);
+  }
+  return canAccessCard(userRole, card.visibilityRoles);
 }
 
 export function isAdminRole(role: UserRole): boolean {

@@ -7,7 +7,7 @@ import {
   getAnnouncements,
 } from "@/lib/firestore/helpers";
 import type { LaunchCard, Category, Announcement, AppUser } from "@/types";
-import { canAccessCard, canSeeCategory } from "@/types";
+import { canAccessCard, canSeeCard, canSeeCategory } from "@/types";
 
 export function useLaunchData(user: Pick<AppUser, "id" | "role"> | null | undefined) {
   const [cards, setCards] = useState<LaunchCard[]>([]);
@@ -60,7 +60,7 @@ export function useLaunchData(user: Pick<AppUser, "id" | "role"> | null | undefi
     return cards.filter(
       (c) =>
         !hiddenCategoryIds.has(c.categoryId) &&
-        canAccessCard(userRole, c.visibilityRoles)
+        canSeeCard(c, userId, userRole)
     );
   }, [cards, categories, userId, userRole]);
 

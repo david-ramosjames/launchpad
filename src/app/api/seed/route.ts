@@ -16,6 +16,7 @@ export async function POST(request: Request) {
       SEED_CARDS.map((card) => ({
         ...card,
         categoryId: card.categoryId,
+        allowedUserIds: [],
       }))
     );
     return NextResponse.json({

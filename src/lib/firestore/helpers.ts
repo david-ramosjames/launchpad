@@ -202,6 +202,9 @@ function mapCardDoc(d: { id: string; data: () => Record<string, unknown> }): Lau
     url: data.url as string,
     tags: (data.tags as string[]) ?? [],
     visibilityRoles: (data.visibilityRoles as UserRole[]) ?? [],
+    allowedUserIds: Array.isArray(data.allowedUserIds)
+      ? data.allowedUserIds.filter((id): id is string => typeof id === "string")
+      : [],
     isActive: data.isActive as boolean,
     isNew: data.isNew as boolean,
     isImportant: data.isImportant as boolean,

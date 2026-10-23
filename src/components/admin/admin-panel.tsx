@@ -77,6 +77,8 @@ const EMPTY_CARD = {
   url: "",
   tags: "",
   visibilityRoles: ["viewer"] as UserRole[],
+  allowedUserIds: [] as string[],
+  restrictToPeople: false,
   isActive: true,
   isNew: false,
   isImportant: false,
@@ -97,6 +99,7 @@ export function AdminPanel() {
   const [newCategoryName, setNewCategoryName] = useState("");
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [editingCategoryName, setEditingCategoryName] = useState("");
+  const [personFilter, setPersonFilter] = useState("");
 
   const load = async () => {
     setLoading(true);
@@ -143,6 +146,8 @@ export function AdminPanel() {
       url: card.url,
       tags: card.tags.join(", "),
       visibilityRoles: card.visibilityRoles,
+      allowedUserIds: card.allowedUserIds,
+      restrictToPeople: card.allowedUserIds.length > 0,
       isActive: card.isActive,
       isNew: card.isNew,
       isImportant: card.isImportant,
@@ -160,6 +165,10 @@ export function AdminPanel() {
       alert("Please enter a title.");
       return;
     }
+    if (cardForm.restrictToPeople && cardForm.allowedUserIds.length === 0) {
+      alert("Pick at least one person, or switch back to roles.");
+      return;
+    }
 
     const payload = {
       title: cardForm.title,
@@ -174,6 +183,7 @@ export function AdminPanel() {
         .map((t) => t.trim())
         .filter(Boolean),
       visibilityRoles: cardForm.visibilityRoles,
+      allowedUserIds: cardForm.restrictToPeople ? cardForm.allowedUserIds : [],
       isActive: cardForm.isActive,
       isNew: cardForm.isNew,
       isImportant: cardForm.isImportant,
@@ -227,6 +237,15 @@ export function AdminPanel() {
   const handleRoleChange = async (userId: string, role: UserRole) => {
     await updateUserProfile(userId, { role });
     await load();
+  };
+
+  const toggleAllowedUser = (userId: string) => {
+    setCardForm((prev) => ({
+      ...prev,
+      allowedUserIds: prev.allowedUserIds.includes(userId)
+        ? prev.allowedUserIds.filter((id) => id !== userId)
+        : [...prev.allowedUserIds, userId],
+    }));
   };
 
   const toggleVisibilityRole = (role: UserRole) => {
@@ -538,7 +557,15 @@ export function AdminPanel() {
                       ) : (
                         catCards.map((card, idx) => (
                           <tr key={card.id} className="border-b border-stone-100">
-                            <td className="py-3 pr-3 font-medium">{card.title}</td>
+                            <td className="py-3 pr-3 font-medium">
+                              {card.title}
+                              {card.allowedUserIds.length > 0 && (
+                                <span className="ml-2 text-xs font-normal text-pink-600">
+                                  {card.allowedUserIds.length}{" "}
+                                  {card.allowedUserIds.length === 1 ? "person" : "people"}
+                                </span>
+                              )}
+                            </td>
                             <td className="py-3 pr-3 text-stone-500">{cat.name}</td>
                             <td className="py-3 pr-3 tabular-nums text-stone-600">{card.order}</td>
                             <td className="py-3 pr-3">
@@ -906,23 +933,90 @@ export function AdminPanel() {
                 />
               </div>
               <div>
-                <Label>Visibility roles</Label>
-                <div className="mt-1 flex flex-wrap gap-2">
-                  {ALL_ROLES.map((role) => (
+                <Label>Who can see this card</Label>
+                <div className="mt-1 grid grid-cols-2 gap-2">
+                  {[
+                    { value: false, label: "By role" },
+                    { value: true, label: "Specific people" },
+                  ].map((option) => (
                     <button
-                      key={role}
+                      key={option.label}
                       type="button"
-                      onClick={() => toggleVisibilityRole(role)}
-                      className={`rounded-full px-3 py-1 text-xs font-medium border ${
-                        cardForm.visibilityRoles.includes(role)
-                          ? "bg-navy-800 text-white border-navy-800"
-                          : "bg-white text-stone-600 border-stone-200"
+                      onClick={() =>
+                        setCardForm((p) => ({ ...p, restrictToPeople: option.value }))
+                      }
+                      className={`rounded-lg border px-3 py-2 text-sm font-medium ${
+                        cardForm.restrictToPeople === option.value
+                          ? "border-navy-700 bg-navy-50 text-navy-900"
+                          : "border-stone-200 text-stone-600"
                       }`}
                     >
-                      {role}
+                      {option.label}
                     </button>
                   ))}
                 </div>
+                {cardForm.restrictToPeople ? (
+                  <div className="mt-3 space-y-2">
+                    <Input
+                      placeholder="Search people…"
+                      value={personFilter}
+                      onChange={(e) => setPersonFilter(e.target.value)}
+                    />
+                    <ul className="max-h-48 divide-y divide-stone-100 overflow-y-auto rounded-lg border border-stone-200">
+                      {users
+                        .filter((user) => {
+                          const q = personFilter.trim().toLowerCase();
+                          return (
+                            !q ||
+                            user.displayName.toLowerCase().includes(q) ||
+                            user.email.toLowerCase().includes(q)
+                          );
+                        })
+                        .sort((a, b) => a.displayName.localeCompare(b.displayName))
+                        .map((user) => (
+                          <li key={user.id}>
+                            <label className="flex cursor-pointer items-center gap-3 px-3 py-2 text-sm hover:bg-stone-50">
+                              <input
+                                type="checkbox"
+                                className="h-4 w-4 accent-navy-700"
+                                checked={cardForm.allowedUserIds.includes(user.id)}
+                                onChange={() => toggleAllowedUser(user.id)}
+                              />
+                              <span className="min-w-0">
+                                <span className="block truncate font-medium text-navy-900">
+                                  {user.displayName}
+                                </span>
+                                <span className="block truncate text-xs text-stone-500">
+                                  {user.email}
+                                </span>
+                              </span>
+                            </label>
+                          </li>
+                        ))}
+                    </ul>
+                    <p className="text-xs text-stone-500">
+                      Only the people you check will see this card. Roles are ignored.
+                      Someone has to sign in once before they appear here.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {ALL_ROLES.map((role) => (
+                      <button
+                        key={role}
+                        type="button"
+                        onClick={() => toggleVisibilityRole(role)}
+                        className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                          cardForm.visibilityRoles.includes(role)
+                            ? "border-navy-800 bg-navy-800 text-white"
+                            : "border-stone-200 bg-white text-stone-600"
+                        }`}
+                      >
+                        {role}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="flex gap-4">
                 <label className="flex items-center gap-2 text-sm">
