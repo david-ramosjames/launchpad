@@ -10,10 +10,13 @@ const SCORE_CACHE_MS = 5 * 60 * 1000;
 
 function supabaseConfig() {
   const url = process.env.DOCKET_FLOW_SUPABASE_URL?.replace(/\/$/, "");
-  const key = process.env.DOCKET_FLOW_SUPABASE_SERVICE_ROLE_KEY;
+  // Prefer the new secret key; fall back to the legacy service_role key during migration.
+  const key =
+    process.env.DOCKET_FLOW_SUPABASE_SECRET_KEY ||
+    process.env.DOCKET_FLOW_SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) {
     throw new Error(
-      "Docket Flow is not configured. Set DOCKET_FLOW_SUPABASE_URL and DOCKET_FLOW_SUPABASE_SERVICE_ROLE_KEY."
+      "Docket Flow is not configured. Set DOCKET_FLOW_SUPABASE_URL and DOCKET_FLOW_SUPABASE_SECRET_KEY."
     );
   }
   return { url, key };
